@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI 跑步教练</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+<div class="max-w-3xl mx-auto p-6 space-y-8">
+  <h1 class="text-2xl font-bold">AI 跑步教练</h1>
+
+  <section class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">个人信息与时间安排</h2>
+    <form id="profileForm" method="post" action="/profile" class="space-y-3" data-profile-exists="{{ 1 if profile else 0 }}">
+      <label class="block text-sm">基础信息</label>
+      <textarea name="basic_info" id="basic_info" class="w-full border p-2" rows="3" placeholder="例如：32岁，177cm，77kg" {% if profile %}readonly{% endif %}>{{ profile.basic_info if profile else '' }}</textarea>
+
+      <label class="block text-sm">时间安排文本</label>
+      <textarea name="schedule_text" id="schedule_text" class="w-full border p-2" rows="6" placeholder="例如：\n周一 轻松跑6公里\n周二 轻松跑6公里+力量\n周三 休息\n周四 强度课（阈值跑/间歇）\n周五 休息\n周六 LSD 12公里\n周日 休息" {% if profile %}readonly{% endif %}>{{ profile.schedule_text if profile else '' }}</textarea>
+
+      <label class="block text-sm">心率分区与说明（可选）</label>
+      <textarea name="hr_zones" id="hr_zones" class="w-full border p-2" rows="3" placeholder="最大心率、静息心率与Zone划分" {% if profile %}readonly{% endif %}>{{ profile.hr_zones if profile else '' }}</textarea>
+
+      <label class="block text-sm">其他信息（可选）</label>
+      <textarea name="other_info" id="other_info" class="w-full border p-2" rows="3" placeholder="例如：伤病史、近期比赛目标、可训练时间限制等" {% if profile %}readonly{% endif %}>{{ profile.other_info if profile else '' }}</textarea>
+
+      <div class="flex gap-3">
+        <button id="saveBtn" class="px-4 py-2 bg-blue-600 text-white rounded">保存</button>
+        {% if profile %}
+        <button id="editBtn" type="button" class="px-4 py-2 bg-gray-700 text-white rounded">编辑</button>
+        {% endif %}
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">上传 FIT 文件</h2>
+    <form id="uploadForm" method="post" action="/upload" enctype="multipart/form-data" class="space-y-3">
+      <input type="file" name="files" multiple accept=".fit" class="border p-2" />
+      <button class="px-4 py-2 bg-green-600 text-white rounded">上传并解析</button>
+    </form>
+    <div id="uploadStatus" class="text-sm text-gray-600 mt-2"></div>
+  </section>
+
+  <section class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">分析与生成计划</h2>
+    <a href="/analyze" class="px-4 py-2 inline-block bg-purple-600 text-white rounded">生成分析与一周计划</a>
+  </section>
+</div>
+<script>
+  (function(){
+    const form = document.getElementById('profileForm');
+    const profileExists = form && form.getAttribute('data-profile-exists') === '1';
+    const editBtn = document.getElementById('editBtn');
+    const fields = ['basic_info','schedule_text','hr_zones','other_info'].map(id=>document.getElementById(id));
+    if (profileExists && editBtn) {
+      // Initially read-only already set via template; allow editing on click
+      editBtn.addEventListener('click', function(){
+        fields.forEach(f=>{ if(f){ f.removeAttribute('readonly'); } });
+        fields[0] && fields[0].focus();
+      });
+    }
+
+    // AJAX upload to avoid page navigation
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadStatus = document.getElementById('uploadStatus');
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', async function(e){
+        e.preventDefault();
+        uploadStatus.textContent = '正在上传并解析 FIT 文件…';
+        try {
+          const fd = new FormData(uploadForm);
+          const resp = await fetch(uploadForm.action, { method: 'POST', body: fd });
+          if (!resp.ok) throw new Error('上传失败');
+          const data = await resp.json();
+          const count = (data && data.uploaded) ? data.uploaded.length : 0;
+          uploadStatus.textContent = `上传完成：${count} 个文件已解析。`;
+        } catch(err) {
+          uploadStatus.textContent = '上传失败，请重试。';
+        }
+      });
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>分析与计划</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+<div class="max-w-4xl mx-auto p-6 space-y-8">
+  <div>
+    <h1 class="text-3xl font-bold text-gray-800">分析与一周计划</h1>
+    <a href="/" class="text-blue-600 hover:underline">&larr; 返回首页</a>
+  </div>
+
+  {% set parts = text.split('一周计划') %}
+  {% set summary = parts[0] | replace('分析总结', '') | trim %}
+  {% set plan_text = parts[1] | trim if parts | length > 1 else '' %}
+
+  <!-- 分析总结 -->
+  <section class="bg-white p-6 rounded-lg shadow">
+    <h2 class="text-2xl font-semibold text-gray-700 border-b pb-2 mb-4">分析总结</h2>
+    <div class="prose max-w-none text-gray-600 whitespace-pre-wrap">
+      {{ summary }}
+    </div>
+  </section>
+
+  <!-- 一周计划 -->
+  <section class="bg-white p-6 rounded-lg shadow">
+    <h2 class="text-2xl font-semibold text-gray-700 border-b pb-2 mb-4">一周计划</h2>
+    
+    {% if plan_json %}
+    <!-- 表格视图 -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">星期</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">训练类型</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">详情</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">目标</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for day in plan_json %}
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ day.day }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ day.workout_type }}</td>
+            <td class="px-6 py-4 whitespace-normal text-sm text-gray-500">{{ day.details }}</td>
+            <td class="px-6 py-4 whitespace-normal text-sm text-gray-500">{{ day.target }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <!-- 纯文本后备方案 -->
+    <div class="prose max-w-none text-gray-600 whitespace-pre-wrap">
+      {{ plan_text if plan_text else text }}
+    </div>
+    {% endif %}
+  </section>
+
+  <a href="/" class="text-blue-600 hover:underline">&larr; 返回首页</a>
+</div>
+</body>
+</html>
